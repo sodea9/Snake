@@ -1,0 +1,18 @@
+V1: Make original snake game
+Implementation plan:
+    Make game size scalable
+    Add game over message
+    Add score counter
+    NOTE: Move event handler into function?
+    NOTE: move constants and classes to separate file
+
+upload to github
+
+V2: Add Settings menu to change 
+        speed, colors, keybinds, screen size (add return to defaults button), (save game settings on pc?)
+    Challenge Mode(walls)
+    2-player mode (if you hit other person you die)
+
+
+
+Move 190S projects into separate repos on github
