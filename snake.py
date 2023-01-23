@@ -1,11 +1,11 @@
 #Author: Sean O'Dea
-#Date 1/15/2023
+#Publication Date 1/15/2023
 #Beta 0.9
 
 import pygame as pg
 import random
+from constants import *
 
-# Import pygame.locals for easier access to key coordinates
 from pygame.locals import (
     K_UP,
     K_DOWN,
@@ -13,20 +13,10 @@ from pygame.locals import (
     K_RIGHT,
     K_ESCAPE,
     KEYDOWN,
-    QUIT,
+    QUIT
 )
+
 pg.init()
-
-SQ = 20
-GRIDSIZE = 30
-SCREEN_WIDTH = (SQ+1) * GRIDSIZE
-SCREEN_HEIGHT = SCREEN_WIDTH
-GAMESPEED = 10
-
-BLACK = pg.Color(0,0,0)
-WHITE = pg.Color(255,255,255)
-RED = pg.Color(255,0,0)
-GREEN = pg.Color(0,255,0)
 
 class BodyBlock(pg.sprite.Sprite):
     def __init__(self, x=0, y=0):
@@ -44,7 +34,6 @@ class Head(BodyBlock):
         self.rect = pg.Rect(168,SCREEN_HEIGHT//2,SQ,SQ)
 
     def update(self, direction):
-        global running
         """
         moves head of snake to next position based on current direction
         """
@@ -80,7 +69,7 @@ class Snake():
             i-=1
         self.tailx, self.taily = self.parts[-1].rect.left, self.parts[-1].rect.top
   
-    def display(self):
+    def toDisplay(self):
         for part in self.parts:
             screen.blit(part.surf, part.rect)
 
@@ -91,11 +80,16 @@ class Apple(BodyBlock):
         self.rect = pg.Rect(525,315,SQ,SQ)
   
     def update(self):
-        randomx = random.randrange(0,SCREEN_WIDTH,SQ+1)
-        randomy = random.randrange(0,SCREEN_HEIGHT,SQ+1)
-        self.rect = pg.Rect(randomx, randomy, SQ, SQ)
-   
-    def display(self):
+        """
+        randomly moves apple location, makes sure apple doesn't spawn in snake
+        """
+        while pg.sprite.spritecollideany(apple, snakeBodyGroup) or\
+                                            pg.sprite.collide_rect(apple, snake.head):
+            randomx = random.randrange(0,SCREEN_WIDTH,SQ+1)
+            randomy = random.randrange(0,SCREEN_HEIGHT,SQ+1)
+            self.rect = pg.Rect(randomx, randomy, SQ, SQ)
+        
+    def toDisplay(self):
         screen.blit(apple.surf, apple.rect)
 
 def endGame(head):
@@ -106,53 +100,63 @@ def endGame(head):
     #checks if head hits body
     elif pg.sprite.spritecollideany(snake.head, snakeBodyGroup):
         return True
-    
+    else:
+        return False
 
-screen = pg.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
-pg.display.set_caption("Snake v0.9")
-screen.fill(BLACK)
-
-snakeDirection = "RIGHT" #Initialize direction to right
-
-snakeBodyGroup = pg.sprite.Group()
-snake = Snake()
-apple = Apple()
-
-clock = pg.time.Clock()
-running = True
-print("Snake by Sean v0.9")
-
-while running:
+def eventHandler(initial_direction):
+    global running
+    global snakeDirection
     for event in pg.event.get():
         if event.type == KEYDOWN:
             if event.key == K_ESCAPE:
-                running = False
-            elif event.key == K_UP and snakeDirection != "DOWN":
+                running = False                        #BUG: 
+            elif event.key == K_UP and initial_direction != "DOWN":
                 snakeDirection = "UP"
-            elif event.key == K_DOWN and snakeDirection != "UP":
+            elif event.key == K_DOWN and initial_direction != "UP":
                 snakeDirection = "DOWN"
-            elif event.key == K_LEFT and snakeDirection != "RIGHT":
+            elif event.key == K_LEFT and initial_direction != "RIGHT":
                 snakeDirection = "LEFT"
-            elif event.key == K_RIGHT and snakeDirection != "LEFT":
+            elif event.key == K_RIGHT and initial_direction != "LEFT":
                 snakeDirection = "RIGHT"
         elif event.type == QUIT:
             running = False
-
-    #change state of snake and apple
-    snake.update(snakeDirection)
-    if pg.sprite.collide_rect(snake.head, apple):
-        snake.append()
-        apple.update()
-
-    if endGame(snake.head):
-        running = False
-
-    #update display
+    
+if __name__ == '__main__':
+    screen = pg.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
+    pg.display.set_caption("Snake v0.9")
     screen.fill(BLACK)
-    snake.display()
-    apple.display()
 
-    pg.display.flip()
-    clock.tick(GAMESPEED)
+    snakeDirection = "RIGHT"
 
-pg.quit()
+    snakeBodyGroup = pg.sprite.Group()
+    snake = Snake()
+    apple = Apple()
+
+    clock = pg.time.Clock()
+    running = True
+    print("Snake by Sean v0.9")
+
+    #MAIN GAME LOOP
+    while running:
+        #handles user input
+        eventHandler(snakeDirection)
+
+        #change state of snake and apple
+        snake.update(snakeDirection)
+        if pg.sprite.collide_rect(snake.head, apple):
+            snake.append()
+            apple.update()
+
+        #checks for quit condition
+        if endGame(snake.head):
+            running = False
+
+        #update display
+        screen.fill(BLACK)
+        snake.toDisplay()
+        apple.toDisplay()
+
+        pg.display.flip()
+        clock.tick(GAMESPEED)
+
+    pg.quit()
