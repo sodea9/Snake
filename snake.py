@@ -109,7 +109,7 @@ def eventHandler(initial_direction):
     for event in pg.event.get():
         if event.type == KEYDOWN:
             if event.key == K_ESCAPE:
-                running = False                        #BUG: 
+                running = False                        #BUG: snake changing direction too quickly causes second input to not be processed (push to next frame?) 
             elif event.key == K_UP and initial_direction != "DOWN":
                 snakeDirection = "UP"
             elif event.key == K_DOWN and initial_direction != "UP":
